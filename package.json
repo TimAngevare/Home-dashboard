@@ -1,0 +1,41 @@
+{
+  "name": "pi-dashboard",
+  "version": "1.0.0",
+  "description": "Smart home ambient dashboard for Raspberry Pi 4 running in Chromium kiosk mode at 1920x1080.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,client -c blue,magenta \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 3000 --host",
+    "start": "concurrently -k -n server,client -c blue,magenta \"node server/index.js\" \"npm run preview\""
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "@tanstack/react-query": "^5.51.0",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^140.0.1",
+    "lucide-react": "^0.408.0",
+    "node-cache": "^5.1.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.3"
+  }
+}
