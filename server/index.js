@@ -4,11 +4,14 @@ import cors from 'cors';
 import os from 'node:os';
 
 import weather from './routes/weather.js';
-import news from './routes/news.js';
 import lights from './routes/homeassistant.js';
+import switches from './routes/switches.js';
+import media from './routes/media.js';
 import network from './routes/openwrt.js';
 import calendar from './routes/calendar.js';
 import todos from './routes/notion.js';
+import system from './routes/system.js';
+import storage from './routes/storage.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
@@ -34,11 +37,14 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/weather', weather);
-app.use('/api/news', news);
 app.use('/api/lights', lights);
+app.use('/api/switches', switches);
+app.use('/api/media', media);
 app.use('/api/network', network);
 app.use('/api/calendar', calendar);
 app.use('/api/todos', todos);
+app.use('/api/system', system);
+app.use('/api/storage', storage);
 
 app.use((err, _req, res, _next) => {
   console.error('[server] unhandled error:', err);

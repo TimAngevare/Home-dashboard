@@ -69,6 +69,11 @@ export default function NetworkWidget({ index }) {
                 </span>
               </span>
             </div>
+            {data.router && (
+              <div className="text-[10px] text-[var(--text-muted)] mt-1 font-mono">
+                router load {data.router.load1?.toFixed(2) ?? '—'} · up {formatUptime(data.router.uptimeSec)}
+              </div>
+            )}
           </div>
 
           <div className="min-h-0">
@@ -135,6 +140,13 @@ function Stat({ icon, label, value, unit, color }) {
       </div>
     </div>
   );
+}
+
+function formatUptime(sec) {
+  if (!sec) return '—';
+  const days = Math.floor(sec / 86400);
+  const hours = Math.floor((sec % 86400) / 3600);
+  return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
 }
 
 function formatBytes(b) {

@@ -1,61 +1,63 @@
 import { Router } from 'express';
-import { google } from 'googleapis';
 import { cacheMiddleware, buildResponse, buildError } from '../middleware/cache.js';
+import { getCalendars, getCalendarEvents, parseIdList } from '../lib/ha.js';
 
 const router = Router();
 
 const PALETTE = ['#9b6dff', '#3b8bf5', '#00d4aa', '#f5a623', '#ff4d4d', '#7ad7f0', '#f06292'];
 
-function getOAuthClient() {
-  const id = process.env.GOOGLE_CLIENT_ID;
-  const secret = process.env.GOOGLE_CLIENT_SECRET;
-  const refresh = process.env.GOOGLE_REFRESH_TOKEN;
-  if (!id || !secret || !refresh) return null;
-  const client = new google.auth.OAuth2(id, secret);
-  client.setCredentials({ refresh_token: refresh });
-  return client;
+function prettyName(entityId) {
+  return entityId.replace(/^calendar\./, '').replace(/_/g, ' ');
 }
 
 router.get('/', cacheMiddleware('calendar', 4 * 60), async (_req, res) => {
-  const auth = getOAuthClient();
-  if (!auth) return res.json(buildError('Google OAuth not configured'));
+  const configuredIds = parseIdList(process.env.HA_CALENDAR_ENTITY_IDS);
+
+  let calendarMeta;
+  try {
+    // Prefer HA's calendar list so we get real friendly names + let a blank
+    // env var mean "all calendars". Falls back to the configured id list
+    // (with a derived name) if HA's calendar component isn't loaded.
+    const list = await getCalendars();
+    const filtered = configuredIds.length
+      ? list.filter((c) => configuredIds.includes(c.entity_id))
+      : list;
+    calendarMeta = filtered.map((c, i) => ({
+      id: c.entity_id,
+      name: c.name || prettyName(c.entity_id),
+      color: PALETTE[i % PALETTE.length],
+    }));
+  } catch {
+    calendarMeta = configuredIds.map((id, i) => ({
+      id,
+      name: prettyName(id),
+      color: PALETTE[i % PALETTE.length],
+    }));
+  }
+
+  if (!calendarMeta.length) {
+    return res.json(buildError('no calendars configured (set HA_CALENDAR_ENTITY_IDS, or check HA calendar integration)'));
+  }
+
+  const now = new Date();
+  const max = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   try {
-    const cal = google.calendar({ version: 'v3', auth });
-    const { data: list } = await cal.calendarList.list({ maxResults: 50 });
-    const calendars = list.items || [];
-
-    const now = new Date();
-    const max = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const calendarMeta = calendars.map((c, i) => ({
-      id: c.id,
-      name: c.summary,
-      color: c.backgroundColor || PALETTE[i % PALETTE.length],
-    }));
-
     const responses = await Promise.allSettled(
-      calendarMeta.map((c) =>
-        cal.events.list({
-          calendarId: c.id,
-          timeMin: now.toISOString(),
-          timeMax: max.toISOString(),
-          singleEvents: true,
-          orderBy: 'startTime',
-          maxResults: 20,
-        }),
-      ),
+      calendarMeta.map((c) => getCalendarEvents(c.id, now.toISOString(), max.toISOString())),
     );
 
     const events = [];
+    let anyOk = false;
     responses.forEach((r, i) => {
       if (r.status !== 'fulfilled') return;
+      anyOk = true;
       const meta = calendarMeta[i];
-      for (const e of r.value.data.items || []) {
+      for (const e of r.value) {
         const start = e.start?.dateTime || e.start?.date;
         if (!start) continue;
         events.push({
-          id: e.id,
+          id: `${meta.id}:${e.uid || start}`,
           title: e.summary || '(no title)',
           start,
           end: e.end?.dateTime || e.end?.date || null,
@@ -65,6 +67,10 @@ router.get('/', cacheMiddleware('calendar', 4 * 60), async (_req, res) => {
         });
       }
     });
+
+    if (!anyOk) {
+      throw new Error('all calendars unreachable (check the Google/HA calendar integration in Home Assistant)');
+    }
 
     events.sort((a, b) => new Date(a.start) - new Date(b.start));
     res.json(buildResponse({ events: events.slice(0, 20) }));
