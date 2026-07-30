@@ -1,114 +1,52 @@
 import { CalendarDays } from 'lucide-react';
 import { format, isToday, parseISO } from 'date-fns';
-import GlassCard from '../layout/GlassCard.jsx';
 import { useWidget } from '../../hooks/useWidget.js';
 
-export default function CalendarWidget({ index }) {
-  const { data, isLoading, error, lastUpdated, refreshInterval } = useWidget(
-    'calendar',
-    '/api/calendar',
-    300,
-  );
-  const status = error ? 'error' : isLoading ? 'loading' : 'ok';
+export default function CalendarWidget() {
+  const { data, isLoading, error } = useWidget('calendar', '/api/calendar', 300);
 
-  const events = data?.events || [];
+  if (error) {
+    return (
+      <div className="card card-enter agenda-card">
+        <span className="text-xs" style={{ color: 'var(--warn)' }}>{error}</span>
+      </div>
+    );
+  }
+
+  if (isLoading || !data) {
+    return <div className="shimmer" style={{ height: '100%', borderRadius: 'var(--r)' }} />;
+  }
+
+  const events = data.events || [];
   const today = events.filter((e) => isToday(parseISO(e.start)));
-  const upcoming = events.filter((e) => !isToday(parseISO(e.start)));
-  const visible = [...today, ...upcoming].slice(0, 8);
-  const overflow = events.length - visible.length;
+  const later = events.filter((e) => !isToday(parseISO(e.start)));
   const next = events[0];
 
   return (
-    <GlassCard
-      title="Calendar"
-      icon={<CalendarDays size={16} className="text-[var(--accent-purple)]" />}
-      refreshInterval={refreshInterval}
-      lastUpdated={lastUpdated}
-      status={status}
-      error={error}
-      index={index}
-      bodyClassName="overflow-y-auto"
-    >
-      {data ? (
-        events.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {today.length > 0 && (
-              <Section
-                heading="Today"
-                items={today}
-                nextId={next?.id}
-              />
-            )}
-            {upcoming.length > 0 && (
-              <Section
-                heading="Upcoming"
-                items={upcoming.slice(0, Math.max(0, 8 - today.length))}
-                nextId={next?.id}
-              />
-            )}
-            {overflow > 0 && (
-              <div className="text-[10px] text-[var(--text-muted)] text-center">
-                +{overflow} more
-              </div>
-            )}
-          </div>
-        )
-      ) : (
-        <Skeleton />
-      )}
-    </GlassCard>
-  );
-}
-
-function Section({ heading, items, nextId }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{heading}</div>
-      <div className="flex flex-col gap-1">
-        {items.map((e) => (
-          <EventRow key={e.id} event={e} highlight={e.id === nextId} />
-        ))}
+    <div className="card card-enter agenda-card">
+      <div className="agenda-card-header">
+        <span className="glass-card-header-title">Agenda</span>
+        <span className="agenda-card-count">
+          {today.length} today · {later.length} later
+        </span>
       </div>
-    </div>
-  );
-}
 
-function EventRow({ event, highlight }) {
-  const start = parseISO(event.start);
-  const time = event.allDay ? 'All day' : format(start, 'HH:mm');
-  return (
-    <div
-      className={`event-row ${highlight ? 'event-row-next' : ''}`}
-      style={highlight ? { borderLeftColor: event.color } : undefined}
-    >
-      <span
-        className="w-2 h-2 rounded-full shrink-0"
-        style={{ background: event.color }}
-        aria-hidden
-      />
-      <span className="font-mono text-[11px] text-[var(--text-secondary)] w-12 shrink-0">{time}</span>
-      <span className="text-xs text-[var(--text-primary)] truncate flex-1">{event.title}</span>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="h-full flex flex-col items-center justify-center text-center text-[var(--text-muted)] gap-2">
-      <CalendarDays size={28} />
-      <span className="text-xs">No meetings today</span>
-    </div>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className="flex flex-col gap-2">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <div key={i} className="shimmer h-6 w-full rounded" />
-      ))}
+      {events.length === 0 ? (
+        <div className="h-full flex flex-col items-center justify-center text-center gap-2" style={{ color: 'var(--fg3)' }}>
+          <CalendarDays size={28} />
+          <span className="text-xs">No meetings today</span>
+        </div>
+      ) : (
+        <div className="agenda-events">
+          {events.slice(0, 12).map((e) => (
+            <div key={e.id} className={`agenda-event ${e.id === next?.id ? 'agenda-event-next' : ''}`}>
+              <span className="agenda-event-time">{e.allDay ? 'All day' : format(parseISO(e.start), 'HH:mm')}</span>
+              <span className="agenda-event-title">{e.title}</span>
+              <span className="agenda-event-calendar">{e.calendar}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

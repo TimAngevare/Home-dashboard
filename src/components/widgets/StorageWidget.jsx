@@ -17,11 +17,11 @@ export default function StorageWidget() {
       {(data.drives || []).map((d) => (
         <div key={d.mount} className="storage-row">
           <div className="storage-row-header">
-            <span className="flex items-center gap-2 text-[var(--text-secondary)]">
-              <HardDrive size={16} />
+            <span className="flex items-center gap-2" style={{ color: 'var(--fg2)' }}>
+              <HardDrive size={14} />
               {d.label}
             </span>
-            <span className="font-mono text-xs text-[var(--text-muted)]">
+            <span className="font-mono text-xs" style={{ color: 'var(--fg3)' }}>
               {formatGB(d.usedBytes)} / {formatGB(d.totalBytes)} GB
             </span>
           </div>

@@ -1,11 +1,11 @@
-import { Home, Music4, CalendarDays, CheckSquare, Cpu } from 'lucide-react';
+import { House, Music4, CalendarDays, ListChecks, Gauge } from 'lucide-react';
 
 export const TABS = [
-  { id: 'home', label: 'Home', Icon: Home },
-  { id: 'media', label: 'Media', Icon: Music4 },
+  { id: 'home', label: 'Home', Icon: House },
+  { id: 'music', label: 'Music', Icon: Music4 },
   { id: 'agenda', label: 'Agenda', Icon: CalendarDays },
-  { id: 'todos', label: 'Todos', Icon: CheckSquare },
-  { id: 'system', label: 'System', Icon: Cpu },
+  { id: 'tasks', label: 'Tasks', Icon: ListChecks },
+  { id: 'system', label: 'System', Icon: Gauge },
 ];
 
 export default function TabBar({ active, onChange }) {
@@ -18,7 +18,7 @@ export default function TabBar({ active, onChange }) {
           className={`tab-btn ${active === id ? 'tab-btn-active' : ''}`}
           onClick={() => onChange(id)}
         >
-          <Icon size={22} />
+          <Icon size={23} />
           <span>{label}</span>
         </button>
       ))}

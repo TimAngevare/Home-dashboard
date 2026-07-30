@@ -54,3 +54,39 @@ export function useAction(invalidateKeys) {
     isActing: mutation.isPending,
   };
 }
+
+/** Optimistically flips a todo's `done` flag, then PATCHes /api/todos/:id. */
+export function useToggleTodo() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async ({ id, done }) => {
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.error) throw new Error(json?.message || `HTTP ${res.status}`);
+      return json;
+    },
+    onMutate: async ({ id, done }) => {
+      await queryClient.cancelQueries({ queryKey: ['todos'] });
+      const previous = queryClient.getQueryData(['todos']);
+      queryClient.setQueryData(['todos'], (prev) =>
+        prev && {
+          ...prev,
+          data: { ...prev.data, items: prev.data.items.map((t) => (t.id === id ? { ...t, done } : t)) },
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['todos'], context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+
+  return (todo) => mutation.mutate({ id: todo.id, done: !todo.done });
+}

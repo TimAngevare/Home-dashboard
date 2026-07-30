@@ -18,9 +18,9 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="glass-card glass-card-error flex flex-col items-center justify-center text-center gap-2 p-6 text-[var(--accent-red)]">
+        <div className="card glass-card-error flex flex-col items-center justify-center text-center gap-2 p-6" style={{ color: 'var(--warn)' }}>
           <AlertTriangle size={20} />
-          <span className="text-xs text-[var(--text-secondary)]">
+          <span className="text-xs" style={{ color: 'var(--fg2)' }}>
             {this.props.label || 'Widget'} crashed: {String(this.state.error.message || this.state.error)}
           </span>
         </div>

@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Cloud, CloudRain, CloudSnow, CloudSun, Sun } from 'lucide-react';
+import { Sun, Moon, BedDouble, Sunset } from 'lucide-react';
 import { useWidget } from '../../hooks/useWidget.js';
+import { wmo } from '../../lib/weather.js';
 
-function wmoIcon(code) {
-  const c = Number(code);
-  if (c === 0) return Sun;
-  if (c === 1 || c === 2) return CloudSun;
-  if (c >= 51 && c <= 67) return CloudRain;
-  if (c >= 71 && c <= 86) return CloudSnow;
-  return Cloud;
-}
+const MODES = [
+  { id: 'light', Icon: Sun },
+  { id: 'dark', Icon: Moon },
+  { id: 'sleep', Icon: BedDouble },
+];
 
-export default function TopBar() {
+export default function TopBar({ mode, setMode, auto, toggleAuto, sunsetLabel }) {
   const [now, setNow] = useState(() => new Date());
   const { data: weather } = useWidget('weather', '/api/weather', 600);
 
@@ -22,25 +20,48 @@ export default function TopBar() {
   }, []);
 
   const current = weather?.current;
-  const WeatherIcon = wmoIcon(current?.code);
+  const { Icon: WeatherIcon } = wmo(current?.code);
 
   return (
     <div className="top-bar">
-      <div className="top-bar-cell text-left">
-        <span className="font-mono text-base text-[var(--text-primary)]">{format(now, 'HH:mm')}</span>
+      <div className="top-bar-left">
+        <span className="top-bar-clock">{format(now, 'HH:mm')}</span>
+        <span className="top-bar-date">{format(now, 'EEE, d MMM')}</span>
       </div>
-      <div className="top-bar-cell text-center">
-        <span className="font-display text-xs text-[var(--text-secondary)] uppercase tracking-[0.12em]">
-          {format(now, 'EEE, d MMM')}
-        </span>
-      </div>
-      <div className="top-bar-cell text-right">
-        {current ? (
-          <span className="flex items-center gap-1.5 font-mono text-sm text-[var(--text-secondary)]">
-            <WeatherIcon size={15} className="text-[var(--accent-blue)]" />
-            {Math.round(current.temp)}°
-          </span>
-        ) : null}
+
+      <div className="top-bar-right">
+        {current && (
+          <div className="weather-pill">
+            <WeatherIcon size={15} />
+            <span className="weather-pill-temp">{Math.round(current.temp)}°</span>
+            {weather?.locationLabel && (
+              <span className="weather-pill-location">{weather.locationLabel}</span>
+            )}
+          </div>
+        )}
+
+        <div className="mode-switch">
+          {MODES.map(({ id, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              className={`mode-pill ${mode === id ? 'mode-pill-active' : ''}`}
+              onClick={() => setMode(id)}
+            >
+              <Icon size={15} />
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={`auto-chip ${auto ? 'auto-chip-active' : ''}`}
+          onClick={toggleAuto}
+        >
+          <Sunset size={14} />
+          Auto
+          {sunsetLabel && <span className="auto-chip-time">{sunsetLabel}</span>}
+        </button>
       </div>
     </div>
   );

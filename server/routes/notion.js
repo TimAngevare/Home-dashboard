@@ -46,6 +46,7 @@ router.get('/', cacheMiddleware('notion', 4 * 60), async (_req, res) => {
       Object.keys(props).find((k) => k.toLowerCase() === 'status');
     const priorityKey = Object.keys(props).find((k) => k.toLowerCase() === 'priority');
     const dueKey = Object.keys(props).find((k) => /due|date/i.test(k) && props[k].type === 'date');
+    const projectKey = Object.keys(props).find((k) => k.toLowerCase() === 'project');
 
     const filter = statusKey
       ? props[statusKey].type === 'status'
@@ -77,12 +78,51 @@ router.get('/', cacheMiddleware('notion', 4 * 60), async (_req, res) => {
         priorityColor: priority ? PRIORITY_COLORS[priority.toLowerCase()] || '#9b6dff' : null,
         done: status?.toLowerCase() === 'done',
         due,
+        project: projectKey ? readSelect(p[projectKey]) || readPlain(p[projectKey]) || null : null,
       };
     });
 
-    res.json(buildResponse({ items, total: items.length }));
+    res.json(
+      buildResponse({
+        items,
+        total: items.length,
+        schema: { statusKey: statusKey || null, statusType: statusKey ? props[statusKey].type : null },
+      }),
+    );
   } catch (e) {
     res.json(buildError(e?.message || 'notion fetch failed'));
+  }
+});
+
+// PATCH /api/todos/:id  { done: true }
+router.patch('/:id', async (req, res) => {
+  const token = process.env.NOTION_TOKEN;
+  const databaseId = process.env.NOTION_DATABASE_ID;
+  if (!token || !databaseId) return res.json(buildError('NOTION_TOKEN/DATABASE_ID not configured'));
+
+  const done = req.body?.done !== false;
+  const doneName = process.env.NOTION_DONE_STATUS || 'Done';
+  const openName = process.env.NOTION_OPEN_STATUS || 'In progress';
+
+  try {
+    const notion = new Client({ auth: token });
+    const dbInfo = await notion.databases.retrieve({ database_id: databaseId });
+    const props = dbInfo.properties || {};
+    const statusKey =
+      Object.keys(props).find((k) => props[k].type === 'status') ||
+      Object.keys(props).find((k) => k.toLowerCase() === 'status');
+    if (!statusKey) return res.json(buildError('no status property on the database'));
+
+    const value = done ? doneName : openName;
+    const properties =
+      props[statusKey].type === 'status'
+        ? { [statusKey]: { status: { name: value } } }
+        : { [statusKey]: { select: { name: value } } };
+
+    await notion.pages.update({ page_id: req.params.id, properties });
+    res.json(buildResponse({ ok: true, id: req.params.id, done }));
+  } catch (e) {
+    res.json(buildError(e?.message || 'notion update failed'));
   }
 });
 

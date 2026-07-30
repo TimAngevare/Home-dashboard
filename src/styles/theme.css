@@ -1,0 +1,98 @@
+/* Sunrise dashboard theme tokens. Apply one .theme-sunrise-* class to the
+   dashboard root element; every other rule in index.css reads var(--token). */
+
+.theme-sunrise-dark,
+.theme-sunrise-sleep {
+  --bg: radial-gradient(120% 110% at 82% 0%, #3a1a24 0%, #1d0f18 55%, #0e0810 100%);
+  --fg: #fdf1e8;
+  --fg2: rgba(253, 241, 232, .64);
+  --fg3: rgba(253, 241, 232, .36);
+  --card: rgba(255, 236, 220, .06);
+  --card2: rgba(255, 236, 220, .12);
+  --chip: rgba(255, 236, 220, .06);
+  --br: rgba(255, 236, 220, .12);
+  --r: 26px;
+  --shadow: 0 12px 38px rgba(20, 4, 10, .45);
+  --accent: #f4854f;
+  --accent2: #e2607f;
+  --warm: #f7c05c;
+  --ok: #6ec89a;
+  --warn: #ff6b6b;
+  --on-accent: #2a0f06;
+  --accent-glow: rgba(244, 133, 79, .38);
+  --accent-soft: rgba(244, 133, 79, .14);
+  --accent-br: rgba(244, 133, 79, .30);
+  --warm-soft: rgba(247, 192, 92, .13);
+  --warm-br: rgba(247, 192, 92, .30);
+  --ok-soft: rgba(110, 200, 154, .14);
+  --warn-soft: rgba(255, 107, 107, .12);
+  --spark-fill: rgba(244, 133, 79, .20);
+  --rain-text: rgba(226, 96, 127, .9);
+  --art1: rgba(244, 133, 79, .30);
+  --art2: rgba(226, 96, 127, .20);
+  --w1: rgba(244, 133, 79, .14);
+  --w2: rgba(226, 96, 127, .11);
+  --w3: rgba(247, 192, 92, .06);
+  --wave-play: running;
+  --sleep-b: 1;
+}
+
+.theme-sunrise-light {
+  --bg: linear-gradient(180deg, #fff6ec 0%, #ffeade 55%, #fbe0d6 100%);
+  --fg: #2a150f;
+  --fg2: rgba(42, 21, 15, .66);
+  --fg3: rgba(42, 21, 15, .40);
+  --card: rgba(255, 255, 255, .72);
+  --card2: rgba(42, 21, 15, .10);
+  --chip: rgba(255, 255, 255, .62);
+  --br: rgba(42, 21, 15, .10);
+  --r: 26px;
+  --shadow: 0 12px 32px rgba(120, 60, 30, .12);
+  --accent: #d75f26;
+  --accent2: #c0426a;
+  --warm: #c68a12;
+  --ok: #1f9663;
+  --warn: #cf3f3f;
+  --on-accent: #fff8f3;
+  --accent-glow: rgba(215, 95, 38, .28);
+  --accent-soft: rgba(215, 95, 38, .12);
+  --accent-br: rgba(215, 95, 38, .28);
+  --warm-soft: rgba(198, 138, 18, .12);
+  --warm-br: rgba(198, 138, 18, .28);
+  --ok-soft: rgba(31, 150, 99, .12);
+  --warn-soft: rgba(207, 63, 63, .10);
+  --spark-fill: rgba(215, 95, 38, .16);
+  --rain-text: rgba(192, 66, 106, .9);
+  --art1: rgba(215, 95, 38, .22);
+  --art2: rgba(192, 66, 106, .16);
+  --w1: rgba(215, 95, 38, .14);
+  --w2: rgba(192, 66, 106, .10);
+  --w3: rgba(198, 138, 18, .08);
+  --wave-play: running;
+  --sleep-b: 1;
+}
+
+/* Sleep = dark tokens + frozen waves + heavy dim (level set inline via --sleep-b). */
+.theme-sunrise-sleep {
+  --wave-play: paused;
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes waveA {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-512px); }
+}
+
+@keyframes waveB {
+  from { transform: translateX(-512px); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes softPulse {
+  0%, 100% { opacity: .9; }
+  50%      { opacity: .45; }
+}

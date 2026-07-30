@@ -12,6 +12,7 @@ import calendar from './routes/calendar.js';
 import todos from './routes/notion.js';
 import system from './routes/system.js';
 import storage from './routes/storage.js';
+import n8n from './routes/n8n.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
@@ -45,6 +46,7 @@ app.use('/api/calendar', calendar);
 app.use('/api/todos', todos);
 app.use('/api/system', system);
 app.use('/api/storage', storage);
+app.use('/api/n8n', n8n);
 
 app.use((err, _req, res, _next) => {
   console.error('[server] unhandled error:', err);
