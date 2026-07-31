@@ -225,13 +225,15 @@ button { font-family: inherit; cursor: pointer; }
 /* ============ Card chrome ============ */
 
 .card {
+  /* No backdrop-filter: the kiosk runs with GPU compositing disabled (see
+     kiosk-launch.sh), so a blur this size would be rasterized in software
+     on every frame - too expensive on the Pi for something used on every
+     card across every page. */
   position: relative;
   height: 100%;
   background: var(--card);
   border: 1px solid var(--br);
   border-radius: var(--r);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   box-shadow: var(--shadow);
 }
 

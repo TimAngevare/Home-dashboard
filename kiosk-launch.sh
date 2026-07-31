@@ -16,6 +16,11 @@ done
 rm -rf /tmp/chromium-kiosk-profile
 mkdir -p /tmp/chromium-kiosk-profile
 
+# --disable-gpu-rasterization/-compositing: /etc/chromium.d/default-flags
+# turns GPU rasterization on system-wide, but on this Pi's VideoCore/Mesa
+# driver that produces a blank white window (Chromium's own compositor
+# output is correct - confirmed via CDP screenshot - it just never reaches
+# the X11 surface). Software compositing is the reliable path here.
 exec chromium \
   --kiosk \
   --user-data-dir=/tmp/chromium-kiosk-profile \
@@ -30,4 +35,6 @@ exec chromium \
   --force-device-scale-factor=1 \
   --window-size=1024,600 \
   --window-position=0,0 \
+  --disable-gpu-rasterization \
+  --disable-gpu-compositing \
   "$URL"
