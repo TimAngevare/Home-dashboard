@@ -30,9 +30,14 @@ router.get('/', cacheMiddleware('n8n', 55), async (_req, res) => {
     startOfDay.setHours(0, 0, 0, 0);
 
     const [workflows, executions] = await Promise.all([
-      axios.get(`${base()}/api/v1/workflows?active=true&limit=100`, { headers: headers(), timeout: 8000 }),
+      axios.get(`${base()}/api/v1/workflows?limit=100`, { headers: headers(), timeout: 8000 }),
       axios.get(`${base()}/api/v1/executions?limit=100&includeData=false`, { headers: headers(), timeout: 8000 }),
     ]);
+
+    const allWorkflows = workflows.data?.data || [];
+    // Newer n8n versions stopped inlining workflowName on executions, so look
+    // it up from the workflows list instead of falling back to the raw ID.
+    const nameById = new Map(allWorkflows.map((w) => [String(w.id), w.name]));
 
     const all = executions.data?.data || [];
     const today = all.filter((e) => new Date(e.startedAt || e.createdAt) >= startOfDay);
@@ -53,7 +58,7 @@ router.get('/', cacheMiddleware('n8n', 55), async (_req, res) => {
 
     res.json(
       buildResponse({
-        activeWorkflows: (workflows.data?.data || []).length,
+        activeWorkflows: allWorkflows.filter((w) => w.active).length,
         runsToday: today.length,
         failedToday,
         successRate: finished.length
@@ -63,7 +68,7 @@ router.get('/', cacheMiddleware('n8n', 55), async (_req, res) => {
         hourly,
         recent: all.slice(0, 6).map((e) => ({
           id: String(e.id),
-          name: e.workflowName || e.workflowData?.name || `workflow ${e.workflowId}`,
+          name: e.workflowName || nameById.get(String(e.workflowId)) || e.workflowData?.name || `workflow ${e.workflowId}`,
           status: e.status === 'crashed' ? 'error' : e.status || 'success',
           finishedAt: e.stoppedAt || e.startedAt || e.createdAt || null,
         })),

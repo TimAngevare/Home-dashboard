@@ -21,6 +21,16 @@ function entityId() {
   return id;
 }
 
+// HA returns entity_picture as a path relative to HA itself (e.g. the
+// media_player_proxy route for Spotify album art) - resolve it against
+// HA_URL so the browser isn't fetching it from the dashboard's own origin.
+function resolveImage(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = (process.env.HA_URL || '').replace(/\/$/, '');
+  return `${base}${path}`;
+}
+
 router.get('/', cacheMiddleware('media', 5), async (_req, res) => {
   try {
     const s = await getState(entityId());
@@ -35,7 +45,7 @@ router.get('/', cacheMiddleware('media', 5), async (_req, res) => {
         title: a.media_title || null,
         artist: a.media_artist || null,
         album: a.media_album_name || null,
-        image: a.entity_picture || null,
+        image: resolveImage(a.entity_picture),
         durationSec: typeof a.media_duration === 'number' ? a.media_duration : null,
         positionSec: typeof a.media_position === 'number' ? a.media_position : null,
         positionUpdatedAt: a.media_position_updated_at || null,
